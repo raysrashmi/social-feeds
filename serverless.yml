@@ -1,0 +1,48 @@
+service: social-feeds
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: eu-west-1
+  environment:
+    SOCIAL_FEED_TWITTER_TABLE: "twitter-feeds-${opt:stage, self:provider.stage}"
+    TWITTER_KEY: ${self:custom.env.twitter_key}
+    TWITTER_SECRET: ${self.custom.env.twitter_secret}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.SOCIAL_FEED_TWITTER_TABLE}"
+
+resources:
+  Resources:
+    TodosDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.SOCIAL_FEED_TWITTER_TABLE}
+
+
+functions:
+  fetchFeeds:
+    handler: src/handler.fetchFeedsFn
+    events:
+      - schedule:
+          rate: rate(10 minutes)
+custom:
+  defaultStage: local
+  env: ${file(./env/${self:provider.stage}.yml)}
