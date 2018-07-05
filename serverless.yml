@@ -49,8 +49,8 @@ functions:
     handler: src/handler.getFeedsFn
     events:
       - http:
-        path: feeds
-        method: get
+          path: feeds
+          method: get
 custom:
   defaultStage: local
   env: ${file(./env/${self:provider.stage}.yml)}
