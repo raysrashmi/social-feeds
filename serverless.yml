@@ -7,7 +7,9 @@ provider:
   environment:
     SOCIAL_FEED_TWITTER_TABLE: "twitter-feeds-${opt:stage, self:provider.stage}"
     TWITTER_KEY: ${self:custom.env.twitter_key}
-    TWITTER_SECRET: ${self.custom.env.twitter_secret}
+    TWITTER_SECRET: ${self:custom.env.twitter_secret}
+    TWITTER_ACCESS_TOKEN: ${self:custom.env.twitter_access_token}
+    TWITTER_ACCESS_TOKEN_SECRET: ${self:custom.env.twitter_access_token_secret}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -43,6 +45,12 @@ functions:
     events:
       - schedule:
           rate: rate(10 minutes)
+  getFeeds:
+    handler: src/handler.getFeedsFn
+    events:
+      - http:
+        path: feeds
+        method: get
 custom:
   defaultStage: local
   env: ${file(./env/${self:provider.stage}.yml)}

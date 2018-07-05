@@ -4,9 +4,8 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "fetch-tweets": "^0.1.7",
+    "twit": "2.2.11",
     "aws-sdk": "^2.247.1",
-    "knex": "^0.14.6",
-    "pg": "^7.4.3"
+    "uuid": "^2.0.3"
   }
 }

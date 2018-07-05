@@ -1,47 +1,46 @@
+const uuid = require('uuid');
 const AWS = require('aws-sdk');
-const FetchTweets = require('fetch-tweets');
-const apiKeys = {
+const Twit = require('twit')
+const config = {
     consumer_key : process.env.TWITTER_KEY,
     consumer_secret : process.env.TWITTER_SECRET
+    access_token: process.env.TWITTER_ACCESS_TOKEN,
+    access_token_secret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 };
 
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-const fetchFeeds = (event) => {
-  const fetchTweets = new FetchTweets(apiKeys, false);
-  const options = {
-    q: 'rails',
-    lang: 'en',
-    count: 2
-  };
-  fetchTweets.byTopic(options, function(results){
-    const data =  results.statuses;
-    const params = { RequestItems: {"twitter-feeds-dev": []} }
-    console.log("Data" + data.length);
-    for(i=0; i < data.length; i++){
-      const feed = data[i];
-      feedInfo = { TableName: process.env.SOCIAL_FEED_TWITTER_TABLE,
-        Item: { id: feed.id, text: feed.text }
-      }
-      console.log(feedInfo)
-      dynamoDb.put(feedInfo);
-      // const item = data[i];
-      // const item_hash = { PutRequest: { Item:
-      //   { "id": { S: item.id },
-      //     "created_at": { S: item.created_at },
-      //     "user": { S: item.user.screen_name},
-      //     "body": { S: item.text } }}};
-      // params.RequestItems.Music.push(item_hash)
-    };
+const fetchFeeds = (event, context, callback) => {
+  const T = new Twit(config);
 
-    // dynamoDb.batchWriteItem(params, function(err, data) {
-    //   if (err) console.log(err, err.stack); // an error occurred
-    //   else     console.log(data);           // successful response
-    // });
+  T.get("search/tweets", { q: "FifaWorldCup2018", count: 100 }, function(err, data, response) {
+    feeds = data["statuses"]
+
+    for(i=0; i < feeds.length; i++){
+      const feed = feeds[i];
+      const params = {
+        TableName: process.env.SOCIAL_FEED_TWITTER_TABLE,
+        Item: { id: uuid.v1(), text: feed.text, user: feed["user"]["screen_name"] }
+      }
+
+      dynamoDb.put(params, (error) => {
+        // handle potential errors
+        if (error) {
+          console.error(error);
+          callback(null, {
+            statusCode: error.statusCode || 501,
+            headers: { 'Content-Type': 'text/plain' },
+            body: 'Couldn\'t create the todo item.',
+          });
+          return;
+        }
+
+      });
+    }; //for loop
   });
 
-  return options;
+  callback(null, "Success!");
 };
 
 module.exports = fetchFeeds;
