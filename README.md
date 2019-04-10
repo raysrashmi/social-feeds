@@ -1,5 +1,5 @@
 # social-feeds
-Project fetching tweets of ""FifaWorldCup2018"
+Fetch tweets of ""FifaWorldCup2018"
 Using
 
 DynamoDB 
